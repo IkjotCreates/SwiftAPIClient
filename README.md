@@ -1,6 +1,6 @@
-# SwiftAPIClient
+# SwiftAPIClient-SDK
 
-SwiftAPIClient is a network layer that contains Alamofire and enables the ability to quickly implement your API calls.
+SwiftAPIClient is a network layer that enables the ability to quickly implement your server API calls.
 
 The framework includes offline capabilites by storing your json data on the device so recall as and when required. Examples below.
 
@@ -10,10 +10,7 @@ This framework has been developed to help make development faster and more effic
 
 ## Features
 
-The project has been built upon over various projects and includes some basic features and some more advanced. The framework is using a couple of external libraries:
-
-[Alamofire](https://github.com/Alamofire/Alamofire) 
-[CryptoSwift](https://github.com/krzyzanowskim/CryptoSwift)
+The project has been built upon over a long period of time and is used in many projects
 
 - The project uses Swift's Codable Protocols and all models will conform to Codable. 
 - The framework has a mechanism to fetch JSON resource files that should be used for DEMO and testing purposes.
@@ -36,16 +33,34 @@ Sounds like alot to remember! So there are simple helpers that have been setup t
 
 ### CocoaPods
 
-[CocoaPods](https://cocoapods.org) is a dependency manager for Cocoa projects. For usage and installation instructions, visit their website. To integrate Alamofire into your Xcode project using CocoaPods, specify it in your `Podfile`:
+[CocoaPods](https://cocoapods.org) is a dependency manager for Cocoa projects. For usage and installation instructions, visit their website. To integrate SwiftAPIClient into your Xcode project using CocoaPods, specify it in your `Podfile`:
  
 ```ruby
 pod 'SwiftAPIClient'
+```
+
+*NOTE*: If you would like to still use the older version with `Alamofire` please lock your pod - this is no long supported
+
+```ruby
+pod 'SwiftAPIClient', '2.1.3'
 ```
 
 ### Implementation
 
 ```swift
 import SwiftAPIClient
+```
+
+### Swift Package Manager
+
+The [Swift Package Manager](https://swift.org/package-manager/) is a tool for automating the distribution of Swift code and is integrated into the `swift` compiler.
+
+Once you have your Swift package set up, adding SwiftAPIClient as a dependency is as easy as adding it to the `dependencies` value of your `Package.swift`.
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/RichAppz/SwiftAPIClient-SDK.git", .upToNextMajor(from: "1.0.3"))
+]
 ```
 
 #### Client 
@@ -55,29 +70,29 @@ A client is required to create the required Gateway - you can create a multitude
 ``` swift
 class ClientExample: Service {
 
-    //==========================================
+    // ==========================================
     // MARK: Properties
-    //==========================================
+    // ==========================================
 
     var rootURL = "<YOUR ENDPOINT>"
     var headers: [String: String] = [:]
     let networkQueue = OperationQueue()
 
-    //==========================================
+    // ==========================================
     // MARK: Singleton
-    //==========================================
+    // ==========================================
 
     static let shared = ClientExample()
 
-    //==========================================
+    // ==========================================
     // MARK: Initialization
-    //==========================================
+    // ==========================================
 
     init() { }
 
-    //==========================================
+    // ==========================================
     // MARK: Helpers
-    //==========================================
+    // ==========================================
 
     func post(_ request: Request, completion: OperationResponse? = nil) {
         makeRequest(.post, request: request, completion: completion)
@@ -176,6 +191,8 @@ let accounts: [Account]? = try? StorageClient.retrieve()
 
 ## Extras
 
+### Shorthand
+
 The feature list is rather big and writing your requests can be time consuming so try out the extensions that have been created that allow you to do this:
 
 ```swift
@@ -213,6 +230,63 @@ The `stdGetRequest` has various properties that can be set for your request (t
 All the parameters are optional or have defaults you can check the code to see this.
 
 Both `stdGetRequest` and `stdPostRequest` handles all the features that was mentioned above and should be used over a manual route.
+
+### Download files
+
+If you use the `operationType`, which can be found in the `Request`, set the value to `.fileDownload` then if a file is downloaded you will be provided with a temporary filestore URL.
+
+```swift
+    get(
+        Request(
+            endpoint: "/your-filename.csv",
+            operationType: .fileDownload,
+            priority: .high,
+            qualityOfService: .default)
+    ) { (response) in
+        DispatchQueue.main.async {
+            completion(response.fileStoreUrl, response.error)
+        }
+    }
+```
+
+### Uploading files
+
+To upload a file the request can take `FileUpload` model and this contains a few required items:
+
+```swift
+public struct FileUpload {
+    
+    /// If you are converting images you can use `jpegData(compressionQuality: 0.5)`
+    public let data: Data
+    /// This is the parameter expected by your server
+    public let paramName: String
+    /// Needs to contain the file extension also eg `filename.png`
+    public let fullFileName: String
+    /// Standard mimeType string that is expected by HTTP Requests
+    public let mimeType: String
+    
+}
+```
+
+Example:
+
+```swift
+    put(
+        Request(
+            endpoint: "your-endpoint",
+            upload: FileUpload(
+                data: data,
+                paramName: "file",
+                fullFileName: "filename.jpg",
+                mimeType: "image/jpg"
+            ),
+            priority: .high,
+            qualityOfService: .default
+        )
+    ) { (response) in
+        // Handle response
+    }
+```
 
 ## Licence (Mit)
 
